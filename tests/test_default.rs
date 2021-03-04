@@ -62,12 +62,19 @@ fn test_lb_default() -> io::Result<()> {
             .filter_map(|(i, is_break)| if is_break { Some(i) } else { None })
             .collect::<Vec<_>>();
 
-        let actual = linebreaks(&string).map(|(i, _)| i).collect::<Vec<_>>();
+        let actual = linebreaks(&string)
+            .filter(|(_, j)| j.is_some())
+            .map(|(i, _)| i)
+            .collect::<Vec<_>>();
         assert_eq!(
             actual, break_indices,
             "String: ‘{}’, comment: {}",
             string, comment
         );
+        use unicode_linebreak::{
+            linebreaks,
+            BreakOpportunity::{Allowed, Mandatory},
+        };
     }
 
     Ok(())

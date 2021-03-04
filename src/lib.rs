@@ -10,9 +10,13 @@
 //!
 //! let text = "a b \nc";
 //! assert!(linebreaks(text).eq(vec![
-//!     (2, Allowed),   // May break after first space
-//!     (5, Mandatory), // Must break after line feed
-//!     (6, Mandatory)  // Must break at end of text, so that there always is at least one LB
+//!     (0, None),              // No line break possible
+//!     (1, None),              // No line break possible
+//!     (2, Some(Allowed)),     // May break after first space
+//!     (3, None),              // No line break possible
+//!     (4, None),              // No line break possible
+//!     (5, Some(Mandatory)),   // Must break after line feed
+//!     (6, Some(Mandatory))    // Must break at end of text, so that there always is at least one LB
 //! ]));
 //! ```
 //!
@@ -73,9 +77,25 @@ pub enum BreakOpportunity {
 ///
 /// ```
 /// use unicode_linebreak::{linebreaks, BreakOpportunity::{Mandatory, Allowed}};
-/// assert!(linebreaks("Hello world!").eq(vec![(6, Allowed), (12, Mandatory)]));
+/// assert!(linebreaks("Hello world!").eq(vec![
+///     (0, None),
+///     (1, None),
+///     (2, None),
+///     (3, None),
+///     (4, None),
+///     (5, None),
+///     (6, Some(Allowed)),
+///     (7, None),
+///     (8, None),
+///     (9, None),
+///     (10, None),
+///     (11, None),
+///     (12, Some(Mandatory))
+/// ]));
 /// ```
-pub fn linebreaks<'a>(s: &'a str) -> impl Iterator<Item = (usize, BreakOpportunity)> + Clone + 'a {
+pub fn linebreaks<'a>(
+    s: &'a str,
+) -> impl Iterator<Item = (usize, Option<BreakOpportunity>)> + Clone + 'a {
     use BreakOpportunity::{Allowed, Mandatory};
 
     s.char_indices()
@@ -93,11 +113,11 @@ pub fn linebreaks<'a>(s: &'a str) -> impl Iterator<Item = (usize, BreakOpportuni
 
             Some((i, is_break, is_mandatory))
         })
-        .filter_map(|(i, is_break, is_mandatory)| {
+        .map(|(i, is_break, is_mandatory)| {
             if is_break {
-                Some((i, if is_mandatory { Mandatory } else { Allowed }))
+                (i, Some(if is_mandatory { Mandatory } else { Allowed }))
             } else {
-                None
+                (i, None)
             }
         })
 }
